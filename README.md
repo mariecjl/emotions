@@ -5,7 +5,7 @@ _*Stock videos above courtesy of Shutterstock & Storyblocks_
 
 
 This projects includes implementation of both a CNN and a combination of MLP + MediaPipe Facemesh trained on the FER2013 dataset to recognize human facial emotions in real time.
-The trained model takes frames of a camera feed as input and displays confidence scores as live probability bars.
+The trained model takes frames of a camera feed as input and displays confidence scores as live probability bars. (Test accuracy ~65%)
 
 Architecture
 - CNN
