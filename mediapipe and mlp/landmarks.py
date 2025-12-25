@@ -4,10 +4,10 @@ import pandas as pd
 import mediapipe as mp
 from tqdm import tqdm
 
-# Load FER-2013 CSV
+# loading fer2013
 df = pd.read_csv('fer2013.csv')
 
-# Emotion labels (you can drop some later if you want)
+# labels as text
 label_map = {
     0: "angry",
     1: "disgust",
@@ -18,6 +18,7 @@ label_map = {
     6: "neutral"
 }
 
+#mediapipe face
 mp_face = mp.solutions.face_mesh.FaceMesh(
     static_image_mode=True,
     max_num_faces=1,
@@ -58,6 +59,7 @@ for _, row in tqdm(df.iterrows(), total=len(df)):
     y.append(row["emotion"])
     usage_list.append(row["Usage"])
 
+# saving landmarks, labels and usage classfications
 X = np.array(X, dtype=np.float32)
 y = np.array(y, dtype=np.int64)
 
