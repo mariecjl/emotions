@@ -7,6 +7,9 @@ Architecture
   - fully connected layers (256 hidden units & drop out for regularization
   - cross-entropy loss
   - optimizer: adam
+
+- Alternative: MLP + MediaPipe Facemesh
+  - 
  
 
 
