@@ -5,54 +5,36 @@ import numpy as np
 
 from cnnmodel import EmotionCNN
 
-# -----------------------
-# CONFIG
-# -----------------------
+#general config and emotion list
 MODEL_PATH = "emotion_cnn_fer2013.pth"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-EMOTIONS = [
-    "Angry",
-    "Disgust",
-    "Fear",
-    "Happy",
-    "Sad",
-    "Surprise",
-    "Neutral"
-]
+EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
 
-# -----------------------
-# LOAD MODEL
-# -----------------------
+#loading the model
 model = EmotionCNN(num_classes=7).to(DEVICE)
 model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
 model.eval()
 
-print("Model loaded on", DEVICE)
+#print("model loaded on", DEVICE)
 
-# -----------------------
-# FACE DETECTOR
-# -----------------------
+#face detection
 face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
 
-# -----------------------
-# PREPROCESS (MATCH TRAINING)
-# -----------------------
+#preprocessing the frame
 def preprocess_face(face_img):
-    """
-    face_img: grayscale face image (H,W)
-    returns: torch tensor [1,1,48,48]
-    """
+    
+    #face_img: grayscale face image (H,W)
+    #returns: torch tensor [1,1,48,48]
+   
     face_img = cv2.resize(face_img, (48, 48))
     face_img = face_img.astype(np.float32) / 255.0
     face_img = torch.tensor(face_img).unsqueeze(0).unsqueeze(0)
     return face_img
 
-# -----------------------
-# DRAW EMOTION BARS
-# -----------------------
+#emotion bar display with live-updated confidence levels
 def draw_emotion_bars(frame, probs, x=10, y=20):
     bar_w = 200
     bar_h = 18
@@ -76,6 +58,7 @@ def draw_emotion_bars(frame, probs, x=10, y=20):
             1
         )
 
+        #emotion associated with each bar
         cv2.putText(
             frame,
             f"{emotion}: {prob*100:.1f}%",
@@ -86,23 +69,22 @@ def draw_emotion_bars(frame, probs, x=10, y=20):
             1
         )
 
-# -----------------------
-# LIVE CAMERA LOOP
-# -----------------------
+#live camera capture
 cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     raise RuntimeError("Could not open camera.")
-
 print("Press 'q' to quit")
 
+
+#main loop for processing images
 while True:
     ret, frame = cap.read()
     if not ret:
         break
-
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+    #detect faces in the grayscaled image (see previous line)
     faces = face_cascade.detectMultiScale(
         gray,
         scaleFactor=1.3,
@@ -110,6 +92,8 @@ while True:
         minSize=(40, 40)
     )
 
+
+    #preprocess each detected face and run model inference
     for (x, y, w, h) in faces:
         face = gray[y:y+h, x:x+w]
         input_tensor = preprocess_face(face).to(DEVICE)
@@ -118,11 +102,13 @@ while True:
             logits = model(input_tensor)
             probs = F.softmax(logits, dim=1).cpu().numpy()[0]
 
+        #get index and label
         emotion_idx = probs.argmax()
         emotion_label = EMOTIONS[emotion_idx]
 
-        # Face box
+        # draw bounding box around detected face
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 2)
+        #drawing predicted emotion label
         cv2.putText(
             frame,
             emotion_label,
@@ -133,6 +119,7 @@ while True:
             2
         )
 
+        #probability bars
         draw_emotion_bars(frame, probs)
 
     cv2.imshow("Live Emotion Recognition", frame)
